@@ -1,0 +1,8 @@
+---
+# See more about format https://osbs.readthedocs.io/en/latest/users.html#image-configuration
+platforms:
+  only:
+  - x86_64
+
+# instead of docker_api, use imagebuilder for multistage builds
+image_build_method: imagebuilder
