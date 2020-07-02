@@ -35,7 +35,7 @@ ENTRYPOINT ["/go/bin/che-machine-exec"]
 ENV SUMMARY="Web Terminal - Exec container" \
     DESCRIPTION="Web Terminal - Exec container" \
     PRODNAME="web-terminal" \
-    COMPNAME="web-terminal-exec"
+    COMPNAME="exec"
 
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
