@@ -1,4 +1,8 @@
 ---
+go:
+  modules:
+  - module: github.com/eclipse/che-machine-exec
+
 # See more about format https://osbs.readthedocs.io/en/latest/users.html#image-configuration
 platforms:
   only:
