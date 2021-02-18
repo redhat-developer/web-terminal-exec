@@ -14,6 +14,11 @@ package activity
 
 import (
 	"errors"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/eclipse/che-machine-exec/exec"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,10 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 var (
@@ -51,7 +52,7 @@ type Manager interface {
 	Tick()
 }
 
-func New(idleTimeout, stopRetryPeriod time.Duration) (Manager, error) {
+func New(idleTimeout, stopRetryPeriod time.Duration, token string) (Manager, error) {
 	if idleTimeout < 0 {
 		return &noOpManager{}, nil
 	}
@@ -76,6 +77,7 @@ func New(idleTimeout, stopRetryPeriod time.Duration) (Manager, error) {
 		idleTimeout:     idleTimeout,
 		stopRetryPeriod: stopRetryPeriod,
 		activityC:       make(chan bool),
+		token:           token,
 	}, nil
 }
 
@@ -89,6 +91,7 @@ func (m noOpManager) Start() {}
 type managerImpl struct {
 	namespace     string
 	workspaceName string
+	token         string
 
 	idleTimeout     time.Duration
 	stopRetryPeriod time.Duration
@@ -137,7 +140,7 @@ func (m managerImpl) Start() {
 }
 
 func (m managerImpl) stopWorkspace() error {
-	c, err := newWorkspaceClientInCluster()
+	c, err := newWorkspaceClientInCluster(m.token)
 	if err != nil {
 		return err
 	}
@@ -167,11 +170,13 @@ func (m managerImpl) stopWorkspace() error {
 	return nil
 }
 
-func newWorkspaceClientInCluster() (dynamic.Interface, error) {
+func newWorkspaceClientInCluster(token string) (dynamic.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
+
+	config.BearerToken = token
 	config.APIPath = "/apis"
 	config.GroupVersion = DevWorkspaceGroupVersion
 

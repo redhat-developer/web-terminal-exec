@@ -13,8 +13,11 @@
 package main
 
 import (
-	"github.com/eclipse/che-machine-exec/activity"
 	"net/http"
+
+	"github.com/eclipse/che-machine-exec/activity"
+	"github.com/eclipse/che-machine-exec/auth"
+	commonRest "github.com/eclipse/che-machine-exec/common/rest"
 
 	jsonrpc "github.com/eclipse/che-go-jsonrpc"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
@@ -29,11 +32,7 @@ func main() {
 	cfg.Parse()
 	cfg.Print()
 
-	activityManager, err := activity.New(cfg.IdleTimeout, cfg.StopRetryPeriod)
-	if err != nil {
-		logrus.Fatal("Unable to create activity manager. Cause: ", err.Error())
-		return
-	}
+	var activityManager activity.Manager = nil
 
 	r := gin.Default()
 
@@ -64,7 +63,15 @@ func main() {
 	})
 
 	r.POST("/activity/tick", func(c *gin.Context) {
-		rest.HandleActivityTick(c, activityManager)
+		if activityManager == nil {
+			activityManager = initializeActivityManager(c)
+
+			if activityManager != nil {
+				rest.HandleActivityTick(c, activityManager)
+			}
+		} else {
+			rest.HandleActivityTick(c, activityManager)
+		}
 	})
 
 	r.GET("/healthz", func(c *gin.Context) {
@@ -79,10 +86,6 @@ func main() {
 	jsonrpc.RegRoutesGroups(appOpRoutes)
 	jsonrpc.PrintRoutes(appOpRoutes)
 
-	if activityManager != nil {
-		activityManager.Start()
-	}
-
 	if cfg.UseTLS {
 		if err := r.RunTLS(cfg.URL, "/var/serving-cert/tls.crt", "/var/serving-cert/tls.key"); err != nil {
 			logrus.Fatal("Unable to start server with TLS enabled. Cause: ", err.Error())
@@ -92,4 +95,24 @@ func main() {
 			logrus.Fatal("Unable to start server. Cause: ", err.Error())
 		}
 	}
+}
+
+func initializeActivityManager(c *gin.Context) activity.Manager {
+	var token string
+	if auth.IsEnabled() {
+		var err error
+		token, err = auth.Authenticate(c)
+		if err != nil {
+			commonRest.WriteErrorResponse(c, err)
+			return nil
+		}
+	}
+	activityManager, err := activity.New(cfg.IdleTimeout, cfg.StopRetryPeriod, token)
+	if err != nil {
+		logrus.Fatal("Unable to create activity manager. Cause: ", err.Error())
+		return nil
+	}
+
+	activityManager.Start()
+	return activityManager
 }
