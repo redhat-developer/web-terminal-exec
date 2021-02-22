@@ -10,7 +10,7 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
-FROM registry.redhat.io/rhel8/go-toolset:1.13.4-27 as builder
+FROM rhel8/go-toolset:1.13.4-27 as builder
 ENV GOPATH=/go/
 USER root
 WORKDIR /che-machine-exec/
@@ -32,3 +32,20 @@ USER unprivilegeduser
 ENTRYPOINT ["/go/bin/che-machine-exec"]
 
 # append Brew metadata here
+ENV SUMMARY="Web Terminal - Exec container" \
+    DESCRIPTION="Web Terminal - Exec container" \
+    PRODNAME="web-terminal" \
+    COMPNAME="exec"
+
+LABEL summary="$SUMMARY" \
+      description="$DESCRIPTION" \
+      io.k8s.description="$DESCRIPTION" \
+      io.k8s.display-name="$DESCRIPTION" \
+      io.openshift.tags="$PRODNAME,$COMPNAME" \
+      com.redhat.component="$PRODNAME-$COMPNAME-container" \
+      name="$PRODNAME/$COMPNAME" \
+      version="1.2" \
+      license="EPLv2" \
+      maintainer="Serhii Leshchenko <sleshche@redhat.com>" \
+      io.openshift.expose-services="" \
+      usage=""
