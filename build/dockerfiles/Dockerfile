@@ -1,5 +1,4 @@
-#
-# Copyright (c) 2012-2019 Red Hat, Inc.
+# Copyright (c) 2019 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,49 +8,44 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 #
-# Dockerfile defines che-machine-exec production image eclipse/che-machine-exec-dev
-#
-FROM golang:1.12.8-alpine as go_builder
 
-ENV USER=machine-exec
-ENV UID=12345
-ENV GID=23456
-
-# Add user that will be able to start machine-exec-binary but nothing more
-# the result will be propagated then into scratch image
-# See https://stackoverflow.com/a/55757473/12429735RUN
-RUN addgroup --gid "$GID" "$USER" \
-      && adduser \
-      --disabled-password \
-      --gecos "" \
-      --home "$(pwd)" \
-      --ingroup "$USER" \
-      --no-create-home \
-      --uid "$UID" \
-      "$USER"
-# initialize CA certificates to propagate them into scratch image
-RUN apk update && apk add --no-cache git && update-ca-certificates
-
-# compile machine exec binary file
+# https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
+FROM rhel8/go-toolset:1.13.4-27 as builder
+ENV GOPATH=/go/
+USER root
 WORKDIR /che-machine-exec/
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o /go/bin/che-machine-exec .
-
-FROM node:10.16-alpine as cloud_shell_builder
-COPY --from=go_builder /che-machine-exec/cloud-shell cloud-shell-src
-WORKDIR cloud-shell-src
-RUN yarn && \
-    yarn run build && \
-    mkdir /app && \
-    cp -rf index.html dist node_modules /app
+RUN adduser unprivilegeduser && \
+    CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec . && \
+    mkdir -p /rootfs/tmp /rootfs/etc /rootfs/go/bin && \
+    # In the `scratch` you can't use Dockerfile#RUN, because there is no shell and no standard commands (mkdir and so on).
+    # That's why prepare absent `/tmp` folder for scratch image 
+    chmod 1777 /rootfs/tmp && \
+    cp -rf /etc/passwd /rootfs/etc && \
+    cp -rf /che-machine-exec/che-machine-exec /rootfs/go/bin
 
 FROM scratch
-COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=go_builder /etc/passwd /etc/passwd
-COPY --from=go_builder /etc/group /etc/group
-USER machine-exec
 
-COPY --from=go_builder /go/bin/che-machine-exec /go/bin/che-machine-exec
-COPY --from=cloud_shell_builder /app /cloud-shell
+COPY --from=builder /rootfs /
 
-ENTRYPOINT ["/go/bin/che-machine-exec", "--static", "/cloud-shell"]
+USER unprivilegeduser
+ENTRYPOINT ["/go/bin/che-machine-exec"]
+
+# append Brew metadata here
+ENV SUMMARY="Web Terminal - Exec container" \
+    DESCRIPTION="Web Terminal - Exec container" \
+    PRODNAME="web-terminal" \
+    COMPNAME="exec"
+
+LABEL summary="$SUMMARY" \
+      description="$DESCRIPTION" \
+      io.k8s.description="$DESCRIPTION" \
+      io.k8s.display-name="$DESCRIPTION" \
+      io.openshift.tags="$PRODNAME,$COMPNAME" \
+      com.redhat.component="$PRODNAME-$COMPNAME-container" \
+      name="$PRODNAME/$COMPNAME" \
+      version="1.2" \
+      license="EPLv2" \
+      maintainer="Serhii Leshchenko <sleshche@redhat.com>" \
+      io.openshift.expose-services="" \
+      usage=""
