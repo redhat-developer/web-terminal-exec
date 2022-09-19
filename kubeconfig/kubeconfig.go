@@ -171,7 +171,8 @@ func createKubeConfigDir(cmdRslv execInfo.InfoExecCreator, kubeconfigDir string,
 }
 
 func syncKubeConfig(cmdRslv execInfo.InfoExecCreator, config string, kubeconfigLocation string, containerInfo *model.ContainerInfo) error {
-	infoExec := cmdRslv.CreateInfoExec([]string{"sh", "-c", "echo \"" + config + "\" > " + kubeconfigLocation + "/config"}, containerInfo)
+	createCommand := fmt.Sprintf(`echo '%s' > %s/config`, config, kubeconfigLocation)
+	infoExec := cmdRslv.CreateInfoExec([]string{"sh", "-c", createCommand}, containerInfo)
 	if err := infoExec.Start(); err != nil {
 		logrus.Debugf("Could not write kubeconfig to %s in %s/%s. Error: %s", kubeconfigLocation, containerInfo.PodName, containerInfo.ContainerName, err.Error())
 		return errors.New("Could not write kubeconfig to: " + kubeconfigLocation)
