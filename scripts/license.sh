@@ -14,7 +14,7 @@ export ROOT_DIR=$(dirname $(dirname $(readlink -f "$0")));
 # Validate a Eclipse Che license header
 function validateChectlLicenseHeader() {
     python "${ROOT_DIR}"/scripts/validate-license.py $(find "${ROOT_DIR}" -type d \( -path "${ROOT_DIR}"/vendor -o -path "${ROOT_DIR}"/templates \) -prune -false \
-        -o -name '*.sh' -o -name '*.ts' -o -name '*.yml' -o -name '*.yaml' -o -name '*.go' \
+        -o -name '*.sh' -o -name '*.ts' -o -name '*.go' \
         | grep -v vendor \
         | grep -v mocks)
 }
