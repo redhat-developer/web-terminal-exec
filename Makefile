@@ -72,3 +72,19 @@ compile:
 	  -ldflags "-X $(GO_PACKAGE_PATH)/version.Commit=$(GIT_COMMIT_ID) \
 	  -X $(GO_PACKAGE_PATH)/version.BuildTime=$(BUILD_TIME)" \
 	main.go
+
+### docker: Builds and pushes Web Terminal Exec image
+docker: docker-build docker-push
+
+### docker-build: Builds the Web Terminal Exec image
+docker-build:
+	$(DOCKER) build . -t ${WEB_TERMINAL_EXEC_IMG} -f build/Dockerfile
+
+### docker-push: Web Terminal Exec image
+docker-push:
+  ifneq ($(INITIATOR),CI)
+    ifeq ($(WEB_TERMINAL_EXEC_IMG),quay.io/wto/web-terminal-exec:next)
+	    @echo -n "Are you sure you want to push $(WEB_TERMINAL_EXEC_IMG)? [y/N] " && read ans && [ $${ans:-N} = y ]
+    endif
+  endif
+	$(DOCKER) push ${WEB_TERMINAL_EXEC_IMG}
