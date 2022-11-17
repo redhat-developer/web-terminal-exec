@@ -10,3 +10,18 @@
 //   Red Hat, Inc. - initial API and implementation
 
 package main
+
+import (
+	"os"
+
+	"github.com/redhat-developer/web-terminal-exec/pkg/config"
+	"github.com/sirupsen/logrus"
+)
+
+func main() {
+	if err := config.ParseConfig(); err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
+
+}
