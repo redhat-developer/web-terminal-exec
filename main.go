@@ -14,6 +14,7 @@ package main
 import (
 	"os"
 
+	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
 	"github.com/sirupsen/logrus"
 )
@@ -23,5 +24,12 @@ func main() {
 		logrus.Error(err)
 		os.Exit(1)
 	}
+
+	activityManager, err := activity.NewActivityManager(config.IdleTimeout, config.StopRetryPeriod)
+	if err != nil {
+		logrus.Errorf("Unable to create activity manager: %s", err)
+		os.Exit(1)
+	}
+	activityManager.Start()
 
 }
