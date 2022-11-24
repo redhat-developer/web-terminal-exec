@@ -15,6 +15,7 @@ import (
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/constants"
+	"github.com/redhat-developer/web-terminal-exec/pkg/errors"
 )
 
 type Router struct {
@@ -40,7 +41,19 @@ func (s *Router) HTTPSHandler() http.Handler {
 	// Serve /activity/tick endpoint
 	handleFunc(constants.ActivityTickEndpoint, s.handleActivityTick, &authMiddleware{})
 
+	// Serve /exec/init endpoint
+	handleFunc(constants.ExecInitEndpoint, s.handleExecInit, &authMiddleware{})
+
 	// Serve /healthz endpoint
 	handleFunc(constants.HealthzEndpoint, s.handleHealthCheck)
 	return http.Handler(mux)
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	switch t := err.(type) {
+	case errors.HTTPError:
+		http.Error(w, t.Message, t.StatusCode)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
