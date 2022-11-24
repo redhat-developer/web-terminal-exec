@@ -12,11 +12,18 @@
 package main
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
+	"github.com/redhat-developer/web-terminal-exec/pkg/handler"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	TLSCertFile = "/var/serving-cert/tls.crt"
+	TLSKeyFile  = "/var/serving-cert/tls.key"
 )
 
 func main() {
@@ -32,4 +39,10 @@ func main() {
 	}
 	activityManager.Start()
 
+	router := handler.Router{
+		ActivityManager: activityManager,
+	}
+	if err := http.ListenAndServeTLS(config.URL, TLSCertFile, TLSKeyFile, router.HTTPSHandler()); err != nil {
+		logrus.Errorf("Failed to start server with TLS enabled: %s", err)
+	}
 }
