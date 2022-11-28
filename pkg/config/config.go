@@ -68,7 +68,7 @@ const (
 
 var (
 	defaultURLValue            = ":4444"
-	defaultAuthenticatedUserID = ""
+	defaultAuthenticatedUserID = "\x00" // Use null char to distinguish set vs. unset
 	defaultPodSelector         = ""
 	defaultIdleTimeout         = 5 * time.Minute
 	defaultStopRetryPeriod     = 10 * time.Second
@@ -138,7 +138,7 @@ func updateDefaultsFromEnv() error {
 }
 
 func checkConfigValid() error {
-	if AuthenticatedUserID == "" {
+	if AuthenticatedUserID == defaultAuthenticatedUserID {
 		return fmt.Errorf("authenticated user ID must be specified via '--authenticated-user-id")
 	}
 	if !UseBearerToken {
