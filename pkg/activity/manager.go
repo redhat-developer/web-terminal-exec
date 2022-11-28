@@ -89,7 +89,7 @@ func NewActivityManager(idleTimeout, stopRetryPeriod time.Duration) (ActivityMan
 	}
 
 	if stopRetryPeriod <= 0 {
-		return nil, fmt.Errorf("stop retry period must be greater than 0")
+		return nil, fmt.Errorf("stop retry period must be greater than 0 if idling is enabled")
 	}
 
 	devworkspaceClient, _, err := operations.NewDevWorkspaceClient()
