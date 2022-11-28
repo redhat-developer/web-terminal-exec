@@ -139,7 +139,7 @@ func updateDefaultsFromEnv() error {
 
 func checkConfigValid() error {
 	if AuthenticatedUserID == defaultAuthenticatedUserID {
-		return fmt.Errorf("authenticated user ID must be specified via '--authenticated-user-id")
+		return fmt.Errorf("authenticated user ID must be specified via '--authenticated-user-id'")
 	}
 	if !UseBearerToken {
 		logrus.Warn("Flag '--use-bearer-token' is kept for backwards compatibility and must be set to true. Ignoring configured value")
@@ -182,4 +182,24 @@ func printConfig() {
 	logrus.Infof("==> Pod selector: %s", PodSelector)
 	logrus.Infof("==> Idle timeout: %s", IdleTimeout)
 	logrus.Infof("==> Stop retry period: %s", StopRetryPeriod)
+}
+
+func ResetConfigForTest() {
+	DevWorkspaceName = ""
+	DevWorkspaceNamespace = ""
+	DevWorkspaceID = ""
+	URL = ""
+	AuthenticatedUserID = "\x00"
+	IdleTimeout = 0
+	StopRetryPeriod = 0
+	PodSelector = ""
+	UseTLS = false
+	UseBearerToken = false
+	defaultURLValue = ":4444"
+	defaultAuthenticatedUserID = "\x00"
+	defaultPodSelector = ""
+	defaultIdleTimeout = 5 * time.Minute
+	defaultStopRetryPeriod = 10 * time.Second
+	defaultUseBearerToken = true
+	defaultUseTLS = true
 }
