@@ -71,7 +71,7 @@ func (p FakeClientProvider) NewClientWithToken(token string) (kubernetes.Interfa
 		return nil, nil, fmt.Errorf("(TEST) Invalid token")
 	}
 	client := fake.NewSimpleClientset(p.InitialObjs...)
-	return &wrapFakeClientCoreV1{client}, &rest.Config{}, nil
+	return &WrapFakeClientCoreV1{client}, &rest.Config{}, nil
 }
 
 func (p FakeClientProvider) NewOpenShiftUserClient(token string) (dynamic.Interface, *rest.Config, error) {
@@ -92,11 +92,11 @@ func (p FakeClientProvider) NewOpenShiftUserClient(token string) (dynamic.Interf
 
 // Functions below are to wrap the RESTClient in fake.Clientset (which is by default nil)
 // This is required to allow allow resolving requests for pods/exec in tests.
-type wrapFakeClientCoreV1 struct {
+type WrapFakeClientCoreV1 struct {
 	*fake.Clientset
 }
 
-func (f *wrapFakeClientCoreV1) CoreV1() typedcorev1.CoreV1Interface {
+func (f *WrapFakeClientCoreV1) CoreV1() typedcorev1.CoreV1Interface {
 	return &wrapFakeClientHTTPClient{f.Clientset.CoreV1()}
 }
 

@@ -1,0 +1,28 @@
+apiVersion: workspace.devfile.io/v1alpha2
+kind: DevWorkspace
+metadata:
+  name: test-workspace
+  namespace: test-namespace
+  labels:
+    console.openshift.io/terminal: 'true'
+    controller.devfile.io/creator: test-creator-id
+  annotations:
+    controller.devfile.io/debug-start: 'true'
+    controller.devfile.io/restricted-access: 'true'
+spec:
+  routingClass: basic
+  started: true
+  template:
+    components:
+    - name: web-terminal-tooling
+      plugin:
+        kubernetes:
+          name: web-terminal-tooling
+          namespace: openshift-operators
+    - name: web-terminal-exec
+      plugin:
+        kubernetes:
+          name: web-terminal-exec
+          namespace: openshift-operators
+status:
+  devworkspaceId: test-workspace-id
