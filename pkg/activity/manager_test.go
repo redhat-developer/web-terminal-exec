@@ -49,8 +49,8 @@ func TestActivityManagerTimesOut(t *testing.T) {
 	fakeDynamicClient := fake.NewSimpleDynamicClient(&runtime.Scheme{}, &workspace)
 
 	manager := activityManager{
-		idleTimeout:        1 * time.Millisecond,
-		stopRetryPeriod:    1 * time.Millisecond,
+		idleTimeout:        5 * time.Millisecond,
+		stopRetryPeriod:    5 * time.Millisecond,
 		devworkspaceClient: fakeDynamicClient,
 		activityC:          make(chan bool),
 	}
@@ -98,13 +98,13 @@ func TestTickResetsTimer(t *testing.T) {
 }
 
 func TestActivityManagerIsNoOpIfNoIdleTimeout(t *testing.T) {
-	manager, err := NewActivityManager(-1, 0)
+	manager, err := NewActivityManager(-1, 0, nil)
 	assert.NoError(t, err)
 	assert.IsType(t, &noOpManager{}, manager, "Should use no-op manager if idle timeout is less than 0")
 }
 
 func TestReturnsErrorIfStopDurationNotSpecified(t *testing.T) {
-	_, err := NewActivityManager(1, -1)
+	_, err := NewActivityManager(1, -1, nil)
 	assert.Error(t, err)
 	assert.Regexp(t, "stop retry period must be greater than 0", err.Error())
 }

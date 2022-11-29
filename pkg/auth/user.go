@@ -19,12 +19,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Authenticate(r *http.Request) error {
+func Authenticate(r *http.Request, clientProvider operations.ClientProvider) error {
 	token, err := ExtractToken(r)
 	if err != nil {
 		return err
 	}
-	uid, err := operations.GetCurrentUserUID(token)
+	uid, err := operations.GetCurrentUserUID(token, clientProvider)
 	if err != nil {
 		return fmt.Errorf("unable to verify user: %s", err)
 	}

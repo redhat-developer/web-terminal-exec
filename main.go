@@ -18,6 +18,7 @@ import (
 	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
 	"github.com/redhat-developer/web-terminal-exec/pkg/handler"
+	"github.com/redhat-developer/web-terminal-exec/pkg/operations"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,7 +33,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	activityManager, err := activity.NewActivityManager(config.IdleTimeout, config.StopRetryPeriod)
+	clientProvider := operations.DefaultClientProvider()
+
+	activityManager, err := activity.NewActivityManager(config.IdleTimeout, config.StopRetryPeriod, clientProvider)
 	if err != nil {
 		logrus.Errorf("Unable to create activity manager: %s", err)
 		os.Exit(1)
@@ -41,6 +44,7 @@ func main() {
 
 	router := handler.Router{
 		ActivityManager: activityManager,
+		ClientProvider:  clientProvider,
 	}
 	if err := http.ListenAndServeTLS(config.URL, TLSCertFile, TLSKeyFile, router.HTTPSHandler()); err != nil {
 		logrus.Errorf("Failed to start server with TLS enabled: %s", err)

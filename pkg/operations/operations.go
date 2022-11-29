@@ -55,7 +55,7 @@ func StopDevWorkspace(devworkspaceClient dynamic.Interface) error {
 	return nil
 }
 
-func ExecCommandInPod(client *kubernetes.Clientset, restconfig *rest.Config, podName, containerName, command string) (stdout, stderr *bytes.Buffer, err error) {
+func ExecCommandInPod(client kubernetes.Interface, restconfig *rest.Config, podName, containerName, command string) (stdout, stderr *bytes.Buffer, err error) {
 	req := client.CoreV1().RESTClient().
 		Post().
 		Namespace(config.DevWorkspaceNamespace).
@@ -70,7 +70,8 @@ func ExecCommandInPod(client *kubernetes.Clientset, restconfig *rest.Config, pod
 			Stdin:     true,
 			TTY:       false,
 		}, scheme.ParameterCodec)
-	executor, err := remotecommand.NewSPDYExecutor(restconfig, "POST", req.URL())
+
+	executor, err := NewSPDYExecutor(restconfig, "POST", req.URL())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error setting up executor for command: %s", err)
 	}
@@ -87,7 +88,7 @@ func ExecCommandInPod(client *kubernetes.Clientset, restconfig *rest.Config, pod
 	return &outBuf, &errBuf, nil
 }
 
-func GetCurrentWorkspacePod(client *kubernetes.Clientset) (*corev1.Pod, error) {
+func GetCurrentWorkspacePod(client kubernetes.Interface) (*corev1.Pod, error) {
 	filterOptions := metav1.ListOptions{LabelSelector: config.PodSelector, FieldSelector: "status.phase=Running"}
 	podList, err := client.CoreV1().Pods(config.DevWorkspaceNamespace).List(context.TODO(), filterOptions)
 	if err != nil {
@@ -114,8 +115,8 @@ func GetCurrentWorkspacePod(client *kubernetes.Clientset) (*corev1.Pod, error) {
 	}
 }
 
-func GetCurrentUserUID(token string) (string, error) {
-	userClient, _, err := NewOpenShiftUserClient(token)
+func GetCurrentUserUID(token string, clientProvider ClientProvider) (string, error) {
+	userClient, _, err := clientProvider.NewOpenShiftUserClient(token)
 	if err != nil {
 		return "", fmt.Errorf("failed to create client to check user info")
 	}

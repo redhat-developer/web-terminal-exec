@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/auth"
+	"github.com/redhat-developer/web-terminal-exec/pkg/operations"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,11 +40,13 @@ func (m *logRequestMiddleware) addMiddleware(handler http.Handler) http.Handler 
 	})
 }
 
-type authMiddleware struct{}
+type authMiddleware struct {
+	clientProvider operations.ClientProvider
+}
 
 func (m *authMiddleware) addMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := auth.Authenticate(r); err != nil {
+		if err := auth.Authenticate(r, m.clientProvider); err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}

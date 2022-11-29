@@ -55,7 +55,7 @@ func (s *Router) handleExecInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userClient, userConfig, err := operations.NewClientWithToken(params.KubeConfigParams.BearerToken)
+	userClient, userConfig, err := s.ClientProvider.NewClientWithToken(params.KubeConfigParams.BearerToken)
 	if err != nil {
 		logrus.Errorf("Failed to create client: %s", err)
 		http.Error(w, "Failed to create API client", http.StatusInternalServerError)
