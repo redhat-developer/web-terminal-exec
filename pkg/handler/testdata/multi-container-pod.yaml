@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-terminal-pod
+  namespace: test-namespace
+  annotations:
+    controller.devfile.io/restricted-access: "true"
+  labels:
+    controller.devfile.io/creator: test-creator-id
+    controller.devfile.io/devworkspace_id: test-workspace-id
+    controller.devfile.io/devworkspace_name: test-workspace-name
+spec:
+  containers:
+  - name: alternate-container
+    image: alternate-image
+  - name: web-terminal-tooling
+    image: quay.io/wto/web-terminal-tooling:next
+  - name: web-terminal-exec
+    image: quay.io/wto/web-terminal-exec:next
+status:
+  phase: Running
