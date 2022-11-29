@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
+	"github.com/redhat-developer/web-terminal-exec/pkg/operations/test"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,17 +47,13 @@ func TestActivityManagerTimesOut(t *testing.T) {
 	config.DevWorkspaceID = "test-id"
 	defer config.ResetConfigForTest()
 
-	fakeDynamicClient := fake.NewSimpleDynamicClient(&runtime.Scheme{}, &workspace)
-
-	manager := activityManager{
-		idleTimeout:        5 * time.Millisecond,
-		stopRetryPeriod:    5 * time.Millisecond,
-		devworkspaceClient: fakeDynamicClient,
-		activityC:          make(chan bool),
-	}
+	fakeClientProvider := test.FakeClientProvider{InitialDynamic: []runtime.Object{&workspace}}
+	manager, err := NewActivityManager(1*time.Millisecond, 1*time.Millisecond, fakeClientProvider)
+	assert.NoError(t, err)
 	manager.Start()
 	time.Sleep(20 * time.Millisecond)
-	newWorkspace, err := fakeDynamicClient.Resource(testDevworkspaceGVR).Namespace(workspace.GetNamespace()).Get(context.TODO(), workspace.GetName(), metav1.GetOptions{})
+	client := manager.(*activityManager).devworkspaceClient
+	newWorkspace, err := client.Resource(testDevworkspaceGVR).Namespace(workspace.GetNamespace()).Get(context.TODO(), workspace.GetName(), metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.False(t, workspaceIsStarted(t, newWorkspace), "Workspace should be stopped")
 }
