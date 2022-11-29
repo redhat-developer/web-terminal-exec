@@ -16,10 +16,12 @@ import (
 	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/constants"
 	"github.com/redhat-developer/web-terminal-exec/pkg/errors"
+	"github.com/redhat-developer/web-terminal-exec/pkg/operations"
 )
 
 type Router struct {
 	ActivityManager activity.ActivityManager
+	ClientProvider  operations.ClientProvider
 }
 
 func (s *Router) HTTPSHandler() http.Handler {
@@ -39,10 +41,10 @@ func (s *Router) HTTPSHandler() http.Handler {
 	}
 
 	// Serve /activity/tick endpoint
-	handleFunc(constants.ActivityTickEndpoint, s.handleActivityTick, &authMiddleware{})
+	handleFunc(constants.ActivityTickEndpoint, s.handleActivityTick, &authMiddleware{s.ClientProvider})
 
 	// Serve /exec/init endpoint
-	handleFunc(constants.ExecInitEndpoint, s.handleExecInit, &authMiddleware{})
+	handleFunc(constants.ExecInitEndpoint, s.handleExecInit, &authMiddleware{s.ClientProvider})
 
 	// Serve /healthz endpoint
 	handleFunc(constants.HealthzEndpoint, s.handleHealthCheck)
@@ -51,7 +53,7 @@ func (s *Router) HTTPSHandler() http.Handler {
 
 func handleError(w http.ResponseWriter, err error) {
 	switch t := err.(type) {
-	case errors.HTTPError:
+	case *errors.HTTPError:
 		http.Error(w, t.Message, t.StatusCode)
 	default:
 		http.Error(w, err.Error(), http.StatusInternalServerError)

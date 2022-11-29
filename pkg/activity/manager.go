@@ -83,7 +83,7 @@ func (m *activityManager) Tick() {
 	}
 }
 
-func NewActivityManager(idleTimeout, stopRetryPeriod time.Duration) (ActivityManager, error) {
+func NewActivityManager(idleTimeout, stopRetryPeriod time.Duration, clientProvider operations.ClientProvider) (ActivityManager, error) {
 	if idleTimeout < 0 {
 		return &noOpManager{}, nil
 	}
@@ -92,7 +92,7 @@ func NewActivityManager(idleTimeout, stopRetryPeriod time.Duration) (ActivityMan
 		return nil, fmt.Errorf("stop retry period must be greater than 0 if idling is enabled")
 	}
 
-	devworkspaceClient, _, err := operations.NewDevWorkspaceClient()
+	devworkspaceClient, _, err := clientProvider.NewDevWorkspaceClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Kubernetes API client: %s", err)
 	}

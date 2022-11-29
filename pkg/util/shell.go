@@ -28,7 +28,7 @@ const (
 	catEtcPasswdCommand = "cat /etc/passwd"
 )
 
-func DetectShell(client *kubernetes.Clientset, restconfig *rest.Config, podName, containerName string) (string, error) {
+func DetectShell(client kubernetes.Interface, restconfig *rest.Config, podName, containerName string) (string, error) {
 	// Try to get shell from $SHELL env var
 	stdout, stderr, err := operations.ExecCommandInPod(client, restconfig, podName, containerName, getShellCommand)
 	if err == nil {
