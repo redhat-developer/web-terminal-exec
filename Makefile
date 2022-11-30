@@ -13,6 +13,7 @@
 SHELL := bash
 .SHELLFLAGS = -ec
 .ONESHELL:
+.DEFAULT_GOAL := help
 
 ifndef VERBOSE
   MAKEFLAGS += --silent
@@ -63,6 +64,10 @@ check_fmt:
 	  fi \
 	}
 
+### test: Runs Go tests
+test:
+	go test ./... -coverprofile cover.out
+
 ### compile: Compiles Web Terminal Exec
 compile:
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) GO111MODULE=on go build \
@@ -88,3 +93,8 @@ docker-push:
     endif
   endif
 	$(DOCKER) push ${WEB_TERMINAL_EXEC_IMG}
+
+### help: Display help information about this Makefile
+help:
+	@echo 'Available rules:'
+	@sed -n 's/^### /    /p' $(MAKEFILE_LIST) | awk 'BEGIN { FS=":" } { printf "%-30s -%s\n", $$1, $$2 }'
