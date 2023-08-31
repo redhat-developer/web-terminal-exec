@@ -10,6 +10,11 @@
 
 package constants
 
+import "time"
+
 const (
-	MaxBodyBytes = 1024 * 1024 // 1 MiB
+	MaxBodyBytes       = 1 << 20  // 1 MiB
+	MaxHeaderBytes     = 16 << 10 // 16 KiB
+	ServerReadTimeout  = 3 * time.Second
+	ServerWriteTimeout = 3 * time.Second
 )
