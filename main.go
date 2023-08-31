@@ -17,6 +17,7 @@ import (
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
+	"github.com/redhat-developer/web-terminal-exec/pkg/constants"
 	"github.com/redhat-developer/web-terminal-exec/pkg/handler"
 	"github.com/redhat-developer/web-terminal-exec/pkg/operations"
 	"github.com/sirupsen/logrus"
@@ -46,7 +47,15 @@ func main() {
 		ActivityManager: activityManager,
 		ClientProvider:  clientProvider,
 	}
-	if err := http.ListenAndServeTLS(config.URL, TLSCertFile, TLSKeyFile, router.HTTPSHandler()); err != nil {
+
+	server := http.Server{
+		Addr:           config.URL,
+		Handler:        router.HTTPSHandler(),
+		ReadTimeout:    constants.ServerReadTimeout,
+		WriteTimeout:   constants.ServerWriteTimeout,
+		MaxHeaderBytes: constants.MaxHeaderBytes,
+	}
+	if err := server.ListenAndServeTLS(TLSCertFile, TLSKeyFile); err != nil {
 		logrus.Errorf("Failed to start server with TLS enabled: %s", err)
 	}
 }
