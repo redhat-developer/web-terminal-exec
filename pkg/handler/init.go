@@ -49,7 +49,7 @@ func (s *Router) handleExecInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params, err := readInitParams(r)
+	params, err := readInitParams(w, r)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -144,10 +144,14 @@ func getContainerNameForExec(params *api.InitParams, pod *corev1.Pod) (string, e
 	}
 }
 
-func readInitParams(r *http.Request) (*api.InitParams, error) {
+func readInitParams(w http.ResponseWriter, r *http.Request) (*api.InitParams, error) {
 	params := &api.InitParams{}
+	r.Body = http.MaxBytesReader(w, r.Body, constants.MaxBodyBytes)
 	reqBody, err := io.ReadAll(r.Body)
 	if err != nil {
+		if err.Error() == "http: request body too large" {
+			return nil, errors.NewHTTPError(http.StatusRequestEntityTooLarge, "Request body too large")
+		}
 		return nil, errors.NewInternalErrorf("failed to read exec/init parameters from request: %s", err)
 	}
 	if len(reqBody) > 0 {
