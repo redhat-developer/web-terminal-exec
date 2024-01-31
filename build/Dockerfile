@@ -36,4 +36,20 @@ USER ${USER_UID}
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 CMD /usr/local/bin/web-terminal-exec
 
-# append Brew metadata here
+ENV SUMMARY="Web Terminal - Exec container" \
+    DESCRIPTION="Web Terminal - Exec container" \
+    PRODNAME="web-terminal" \
+    COMPNAME="exec"
+
+LABEL summary="$SUMMARY" \
+      description="$DESCRIPTION" \
+      io.k8s.description="$DESCRIPTION" \
+      io.k8s.display-name="$DESCRIPTION" \
+      io.openshift.tags="$PRODNAME,$COMPNAME" \
+      com.redhat.component="$PRODNAME-$COMPNAME-container" \
+      name="$PRODNAME/$COMPNAME" \
+      version="${CI_X_VERSION}.${CI_Y_VERSION}" \
+      license="EPLv2" \
+      maintainer="Andrew Obuchowicz <aobuchow@redhat.com>" \
+      io.openshift.expose-services="" \
+      usage=""
