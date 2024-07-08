@@ -25,7 +25,7 @@ jobs:
       git-sha: ${{ steps.git-sha.outputs.sha }}
 
     steps:
-    - name: Checkout devworkspace-operator source code
+    - name: Checkout web-terminal-exec source code
       uses: actions/checkout@v2
 
     - name: Set output for Git short SHA
