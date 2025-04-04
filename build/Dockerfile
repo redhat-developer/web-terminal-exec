@@ -1,5 +1,5 @@
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9/go-toolset
-FROM registry.access.redhat.com/ubi9/go-toolset:1.21.13-2.1727893526 AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:1.22.9-1743582279 AS builder
 ENV GOPATH=/go/
 USER root
 WORKDIR /web-terminal-exec
