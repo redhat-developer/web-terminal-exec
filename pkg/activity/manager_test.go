@@ -40,7 +40,6 @@ var (
 )
 
 func TestActivityManagerTimesOut(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetOutput(io.Discard)
 	workspace := loadDevWorkspaceFromFile(t)
 	config.DevWorkspaceName = workspace.GetName()
@@ -60,7 +59,6 @@ func TestActivityManagerTimesOut(t *testing.T) {
 }
 
 func TestTickResetsTimer(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetOutput(io.Discard)
 	workspace := loadDevWorkspaceFromFile(t)
 	config.DevWorkspaceName = workspace.GetName()
@@ -76,7 +74,6 @@ func TestTickResetsTimer(t *testing.T) {
 		devworkspaceClient: fakeDynamicClient,
 		activityC:          make(chan bool),
 	}
-	logrus.Debugf("TestTickResetsTimer: DevWorkspace will be stopped automatically in %s if there is no activity", manager.idleTimeout)
 	activity, done := time.NewTicker(1*time.Millisecond), make(chan bool)
 	go func() {
 		for {

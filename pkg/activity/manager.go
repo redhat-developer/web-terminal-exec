@@ -54,7 +54,6 @@ func (m *activityManager) Start() {
 			select {
 			case <-timer.C:
 				if err := operations.StopDevWorkspace(m.devworkspaceClient); err != nil {
-					logrus.Debug("Timer ended")
 					timer.Reset(m.stopRetryPeriod)
 					logrus.Errorf("Failed to stop workspace. Will retry in %s. Cause: %s", m.stopRetryPeriod, err)
 				} else {
