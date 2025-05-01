@@ -1,6 +1,8 @@
 module github.com/redhat-developer/web-terminal-exec
 
-go 1.18
+go 1.23
+
+toolchain go1.23.0
 
 require (
 	github.com/sirupsen/logrus v1.9.0
