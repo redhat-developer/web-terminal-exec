@@ -1,5 +1,5 @@
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9/go-toolset
-FROM registry.access.redhat.com/ubi9/go-toolset:1.21.13-2.1727893526 AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:1.23.6-1745328278 AS builder
 ENV GOPATH=/go/
 USER root
 WORKDIR /web-terminal-exec
@@ -18,7 +18,7 @@ COPY . .
 RUN make compile
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9-minimal
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1227.1726694542
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5-1745855087
 RUN microdnf -y update && microdnf clean all && rm -rf /var/cache/yum && echo "Installed Packages" && rpm -qa | sort -V && echo "End Of Installed Packages"
 WORKDIR /
 COPY --from=builder /web-terminal-exec/_output/bin/web-terminal-exec /usr/local/bin/web-terminal-exec
