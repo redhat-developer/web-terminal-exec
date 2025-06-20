@@ -1,0 +1,91 @@
+#
+# Copyright (c) 2019-2025 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+
+schemaVersion: 2.3.0
+metadata:
+  name: web-terminal-exec
+components:
+  - name: tools
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
+      memoryRequest: 1Gi
+      memoryLimit: 16Gi
+      cpuLimit: '4'
+      cpuRequest: '0.5'
+      env:
+        - name: DOCKER
+          value: podman
+commands:
+  - id: help
+    exec:
+      label: "List available make targets"
+      component: tools
+      commandLine: make help
+      group:
+        kind: build
+  - id: fmt
+    exec:
+      label: "Format all Go code"
+      component: tools
+      commandLine: make fmt
+      group:
+        kind: build
+  - id: fmt-license
+    exec:
+      label: "Add license headers to Go files"
+      component: tools
+      commandLine: |
+        go install github.com/google/addlicense@latest &&
+        make fmt_license
+      group:
+        kind: build
+  - id: check-fmt
+    exec:
+      label: "Check formatting and license headers"
+      component: tools
+      commandLine: |
+        go install golang.org/x/tools/cmd/goimports@latest &&
+        make check_fmt
+      group:
+        kind: test
+  - id: test
+    exec:
+      label: "Run Go tests and generate coverage"
+      component: tools
+      commandLine: make test
+      group:
+        kind: test
+  - id: vet
+    exec:
+      label: "Run go vet on source code"
+      component: tools
+      commandLine: make vet
+      group:
+        kind: test
+  - id: docker
+    exec:
+      label: "Build and push web-terminal-exec container image"
+      component: tools
+      commandLine: |
+        read -p "ENTER a image name and tag for container builds (default is quay.io/wto/web-terminal-exec:next): " TARGET_IMG &&
+        export WEB_TERMINAL_EXEC_IMG=${TARGET_IMG} &&
+        make docker
+      group:
+        kind: build
+  - id: compile
+    exec:
+      label: "Compile Go binary locally"
+      component: tools
+      commandLine: make compile
+      group:
+        kind: build
+
