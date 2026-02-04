@@ -3,7 +3,7 @@ module github.com/redhat-developer/web-terminal-exec
 go 1.23.0
 
 require (
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.1
 	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.25.4
 	k8s.io/apimachinery v0.25.4
