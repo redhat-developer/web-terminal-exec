@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -116,13 +117,45 @@ func GetCurrentWorkspacePod(client kubernetes.Interface) (*corev1.Pod, error) {
 }
 
 func GetCurrentUserUID(token string, clientProvider ClientProvider) (string, error) {
+	uid, err := getCurrentUserUIDFromSelfSubjectReview(token, clientProvider)
+	if err == nil {
+		return uid, nil
+	}
+
+	// Fall back to the OpenShift User API on clusters where SelfSubjectReview is unavailable.
+	uid, fallbackErr := getCurrentUserUIDFromOpenShiftUserAPI(token, clientProvider)
+	if fallbackErr == nil {
+		return uid, nil
+	}
+
+	return "", fmt.Errorf("failed to get current user information: %s", err)
+}
+
+func getCurrentUserUIDFromSelfSubjectReview(token string, clientProvider ClientProvider) (string, error) {
+	client, _, err := clientProvider.NewClientWithToken(token)
+	if err != nil {
+		return "", fmt.Errorf("failed to create client to check user info: %s", err)
+	}
+	review, err := client.AuthenticationV1().SelfSubjectReviews().Create(
+		context.TODO(),
+		&authenticationv1.SelfSubjectReview{},
+		metav1.CreateOptions{},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return review.Status.UserInfo.UID, nil
+}
+
+func getCurrentUserUIDFromOpenShiftUserAPI(token string, clientProvider ClientProvider) (string, error) {
 	userClient, _, err := clientProvider.NewOpenShiftUserClient(token)
 	if err != nil {
-		return "", fmt.Errorf("failed to create client to check user info")
+		return "", err
 	}
 	userInfo, err := userClient.Resource(userGVR).Namespace("").Get(context.TODO(), "~", metav1.GetOptions{})
 	if err != nil {
-		return "", fmt.Errorf("failed to get current user information: %s", err)
+		return "", err
 	}
 
 	return string(userInfo.GetUID()), nil
