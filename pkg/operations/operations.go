@@ -128,16 +128,20 @@ func GetCurrentUserUID(token string, clientProvider ClientProvider) (string, err
 		return uid, nil
 	}
 
-	return "", fmt.Errorf("failed to get current user information: %s", err)
+	return "", fmt.Errorf(
+		"failed to get current user information: SelfSubjectReview error: %w; OpenShift User API error: %w",
+		err,
+		fallbackErr,
+	)
 }
 
 func getCurrentUserUIDFromSelfSubjectReview(token string, clientProvider ClientProvider) (string, error) {
 	client, _, err := clientProvider.NewClientWithToken(token)
 	if err != nil {
-		return "", fmt.Errorf("failed to create client to check user info: %s", err)
+		return "", fmt.Errorf("failed to create client to check user info: %w", err)
 	}
 	review, err := client.AuthenticationV1().SelfSubjectReviews().Create(
-		context.TODO(),
+		context.Background(),
 		&authenticationv1.SelfSubjectReview{},
 		metav1.CreateOptions{},
 	)
@@ -153,7 +157,7 @@ func getCurrentUserUIDFromOpenShiftUserAPI(token string, clientProvider ClientPr
 	if err != nil {
 		return "", err
 	}
-	userInfo, err := userClient.Resource(userGVR).Namespace("").Get(context.TODO(), "~", metav1.GetOptions{})
+	userInfo, err := userClient.Resource(userGVR).Namespace("").Get(context.Background(), "~", metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}

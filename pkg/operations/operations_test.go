@@ -83,6 +83,10 @@ func TestGetCurrentUserUID(t *testing.T) {
 			if tt.errRegexp != "" {
 				assert.Error(t, err)
 				assert.Regexp(t, tt.errRegexp, err.Error())
+				if tt.name == "Should return error when both user lookups fail" {
+					assert.Contains(t, err.Error(), "SelfSubjectReview error:")
+					assert.Contains(t, err.Error(), "OpenShift User API error:")
+				}
 				return
 			}
 			assert.NoError(t, err)

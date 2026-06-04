@@ -48,7 +48,7 @@ func TestAuthenticate(t *testing.T) {
 		{
 			name:      "SelfSubjectReview failure",
 			headers:   http.Header{"X-Access-Token": []string{testToken}},
-			errRegexp: "unable to verify user: failed to get current user information",
+			errRegexp: "unable to verify user",
 			provider:  selfSubjectReviewErrorClientProvider{},
 		},
 		{
@@ -72,6 +72,10 @@ func TestAuthenticate(t *testing.T) {
 			if tt.errRegexp != "" {
 				assert.Error(t, err)
 				assert.Regexp(t, tt.errRegexp, err.Error())
+				if tt.name == "SelfSubjectReview failure" {
+					assert.Equal(t, "unable to verify user", err.Error())
+					assert.NotContains(t, err.Error(), "not found")
+				}
 			} else {
 				assert.NoError(t, err)
 			}
