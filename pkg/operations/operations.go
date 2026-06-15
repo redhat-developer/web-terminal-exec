@@ -149,6 +149,10 @@ func getCurrentUserUIDFromSelfSubjectReview(token string, clientProvider ClientP
 		return "", err
 	}
 
+	if review.Status.UserInfo.UID == "" {
+		return "", fmt.Errorf("SelfSubjectReview returned empty UID")
+	}
+
 	return review.Status.UserInfo.UID, nil
 }
 
@@ -162,5 +166,10 @@ func getCurrentUserUIDFromOpenShiftUserAPI(token string, clientProvider ClientPr
 		return "", err
 	}
 
-	return string(userInfo.GetUID()), nil
+	uid := string(userInfo.GetUID())
+	if uid == "" {
+		return "", fmt.Errorf("OpenShift User API returned empty UID")
+	}
+
+	return uid, nil
 }

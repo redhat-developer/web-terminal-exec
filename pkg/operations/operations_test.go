@@ -75,6 +75,22 @@ func TestGetCurrentUserUID(t *testing.T) {
 			},
 			errRegexp: "failed to get current user information",
 		},
+		{
+			name: "Should return error when SelfSubjectReview returns empty UID",
+			provider: testUserIDClientProvider{
+				userUID: "",
+			},
+			errRegexp: "SelfSubjectReview returned empty UID",
+		},
+		{
+			name: "Should return error when OpenShift User API returns empty UID",
+			provider: testUserIDClientProvider{
+				returnReviewError: apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
+				userAPIUID:        "",
+				emptyUserAPIUID:   true,
+			},
+			errRegexp: "OpenShift User API returned empty UID",
+		},
 	}
 
 	for _, tt := range tests {
@@ -101,6 +117,7 @@ type testUserIDClientProvider struct {
 	returnClientError  bool
 	returnReviewError  error
 	returnUserAPIError error
+	emptyUserAPIUID    bool
 }
 
 func (p testUserIDClientProvider) NewDevWorkspaceClient() (dynamic.Interface, *rest.Config, error) {
@@ -131,7 +148,7 @@ func (p testUserIDClientProvider) NewOpenShiftUserClient(string) (dynamic.Interf
 	if p.returnUserAPIError != nil {
 		return fakedynamic.NewSimpleDynamicClient(&runtime.Scheme{}), &rest.Config{}, nil
 	}
-	if p.userAPIUID == "" {
+	if p.userAPIUID == "" && !p.emptyUserAPIUID {
 		return nil, nil, fmt.Errorf("(TEST) OpenShift User API not configured")
 	}
 	fakeUser := &unstructured.Unstructured{
