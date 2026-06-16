@@ -43,7 +43,7 @@ kubectl exec -it <POD_NAME> <CONTAINER_NAME> -- <COMMAND>...
 ### Authentication
 Endpoints that require authentication expect a user's OpenShift token to be passed in a `X-Access-Token` or `X-Forwarded-Access-Token` header on the request. This token is used to
 
-1. Verify that the user making the request is the authorized user for the current terminal
+1. Verify that the user making the request is the authorized user for the current terminal, by resolving the user's Kubernetes UID via `SelfSubjectReview` (with fallback to the OpenShift User API when needed)
 2. Execute the pods/exec API call that interacts with the container into which kubeconfig is being injected (if applicable)
 
 If a token is not provided or does not match what is expected, the server returns `HTTP 401`

@@ -111,7 +111,7 @@ func (defaultClientProvider) NewOpenShiftUserClient(token string) (dynamic.Inter
 	}
 
 	config.APIPath = "/apis"
-	config.GroupVersion = &devworkspaceGroupVersion
+	config.GroupVersion = &userGroupVersion
 	config.BearerToken = token
 	config.BearerTokenFile = ""
 

@@ -12,6 +12,7 @@ package operations
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"reflect"
@@ -20,26 +21,169 @@ import (
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
 	"github.com/stretchr/testify/assert"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	fakedynamic "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/rest"
+	k8stesting "k8s.io/client-go/testing"
 	"sigs.k8s.io/yaml"
 )
 
-var userGVK = schema.GroupVersionKind{
-	Group:   "user.openshift.io",
-	Version: "v1",
-	Kind:    "User",
+func TestGetCurrentUserUID(t *testing.T) {
+	const expectedUID = "test-user-uid"
+	tests := []struct {
+		name        string
+		provider    ClientProvider
+		errRegexp   string
+		expectedUID string
+	}{
+		{
+			name: "Should return UID from SelfSubjectReview",
+			provider: testUserIDClientProvider{
+				userUID: expectedUID,
+			},
+			expectedUID: expectedUID,
+		},
+		{
+			name: "Should return error when client creation fails",
+			provider: testUserIDClientProvider{
+				returnClientError: true,
+			},
+			errRegexp: "failed to create client to check user info",
+		},
+		{
+			name: "Should fall back to OpenShift User API when SelfSubjectReview is unavailable",
+			provider: testUserIDClientProvider{
+				returnReviewError: apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
+				userAPIUID:        expectedUID,
+			},
+			expectedUID: expectedUID,
+		},
+		{
+			name: "Should return error when both user lookups fail",
+			provider: testUserIDClientProvider{
+				returnReviewError:  apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
+				returnUserAPIError: apierrors.NewNotFound(schema.GroupResource{Group: "user.openshift.io", Resource: "users"}, "~"),
+			},
+			errRegexp: "failed to get current user information",
+		},
+		{
+			name: "Should return error when SelfSubjectReview returns empty UID",
+			provider: testUserIDClientProvider{
+				userUID: "",
+			},
+			errRegexp: "SelfSubjectReview returned empty UID",
+		},
+		{
+			name: "Should return error when OpenShift User API returns empty UID",
+			provider: testUserIDClientProvider{
+				returnReviewError: apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
+				userAPIUID:        "",
+				emptyUserAPIUID:   true,
+			},
+			errRegexp: "OpenShift User API returned empty UID",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uid, err := GetCurrentUserUID("test-token", tt.provider)
+			if tt.errRegexp != "" {
+				assert.Error(t, err)
+				assert.Regexp(t, tt.errRegexp, err.Error())
+				if tt.name == "Should return error when both user lookups fail" {
+					assert.Contains(t, err.Error(), "SelfSubjectReview error:")
+					assert.Contains(t, err.Error(), "OpenShift User API error:")
+				}
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedUID, uid)
+		})
+	}
+}
+
+type testUserIDClientProvider struct {
+	userUID            string
+	userAPIUID         string
+	returnClientError  bool
+	returnReviewError  error
+	returnUserAPIError error
+	emptyUserAPIUID    bool
+}
+
+func (p testUserIDClientProvider) NewDevWorkspaceClient() (dynamic.Interface, *rest.Config, error) {
+	return nil, nil, nil
+}
+
+func (p testUserIDClientProvider) NewClientWithToken(string) (kubernetes.Interface, *rest.Config, error) {
+	if p.returnClientError {
+		return nil, nil, fmt.Errorf("(TEST) expected error")
+	}
+	client := fake.NewSimpleClientset()
+	client.PrependReactor("create", "selfsubjectreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		if p.returnReviewError != nil {
+			return true, nil, p.returnReviewError
+		}
+		return true, &authenticationv1.SelfSubjectReview{
+			Status: authenticationv1.SelfSubjectReviewStatus{
+				UserInfo: authenticationv1.UserInfo{
+					UID: p.userUID,
+				},
+			},
+		}, nil
+	})
+	return client, &rest.Config{}, nil
+}
+
+func (p testUserIDClientProvider) NewOpenShiftUserClient(string) (dynamic.Interface, *rest.Config, error) {
+	if p.returnUserAPIError != nil {
+		return fakedynamic.NewSimpleDynamicClient(&runtime.Scheme{}), &rest.Config{}, nil
+	}
+	if p.userAPIUID == "" && !p.emptyUserAPIUID {
+		return nil, nil, fmt.Errorf("(TEST) OpenShift User API not configured")
+	}
+	fakeUser := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name": "~",
+				"uid":  p.userAPIUID,
+			},
+		},
+	}
+	fakeUser.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "user.openshift.io",
+		Version: "v1",
+		Kind:    "User",
+	})
+	client := fakedynamic.NewSimpleDynamicClient(&runtime.Scheme{}, fakeUser)
+	return client, &rest.Config{}, nil
 }
 
 func setConfigForTest() {
 	config.DevWorkspaceName = "test-workspace"
 	config.DevWorkspaceNamespace = "test-namespace"
 	config.DevWorkspaceID = "test-id"
+}
+
+func loadDevWorkspaceFromFile(t *testing.T) unstructured.Unstructured {
+	bytes, err := os.ReadFile("testdata/devworkspace.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workspace unstructured.Unstructured
+	if err := yaml.Unmarshal(bytes, &workspace); err != nil {
+		t.Fatal(err)
+	}
+	return workspace
 }
 
 func TestStopDevWorkspace(t *testing.T) {
@@ -101,50 +245,6 @@ func TestGetCurrentWorkspacePod(t *testing.T) {
 			}
 		})
 	}
-}
-
-// func TestGetCurrentUserUID(t *testing.T) {
-// 	fakeProvider := testUserIDClientProvider{}
-// }
-
-// type testUserIDClientProvider struct {
-// 	uid         string
-// 	returnError bool
-// }
-
-// func (p testUserIDClientProvider) NewOpenShiftUserClient(string) (dynamic.Interface, *rest.Config, error) {
-// 	if p.returnError {
-// 		return nil, nil, fmt.Errorf("(TEST) expected error")
-// 	}
-// 	fakeUser := &unstructured.Unstructured{
-// 		Object: map[string]interface{}{
-// 			"metadata": map[string]interface{}{
-// 				"name": "~",
-// 				"uid":  p.uid,
-// 			},
-// 		},
-// 	}
-// 	fakeUser.SetGroupVersionKind(userGVK)
-// 	client := fakedynamic.NewSimpleDynamicClient(&runtime.Scheme{}, fakeUser)
-// 	return client, &rest.Config{}, nil
-// }
-
-// func (testUserIDClientProvider) NewClientWithToken(string) {}
-
-// func (testUserIDClientProvider) NewDevWorkspaceClient() (dynamic.Interface, *rest.Config, error) {
-// 	return nil, nil, nil
-// }
-
-func loadDevWorkspaceFromFile(t *testing.T) unstructured.Unstructured {
-	bytes, err := os.ReadFile("testdata/devworkspace.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var workspace unstructured.Unstructured
-	if err := yaml.Unmarshal(bytes, &workspace); err != nil {
-		t.Fatal(err)
-	}
-	return workspace
 }
 
 func workspaceIsStarted(t *testing.T, workspace *unstructured.Unstructured) bool {

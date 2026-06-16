@@ -11,9 +11,8 @@
 package test
 
 import (
-	"fmt"
-
 	"github.com/redhat-developer/web-terminal-exec/pkg/operations"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,6 +24,7 @@ import (
 	"k8s.io/client-go/rest"
 	restclient "k8s.io/client-go/rest"
 	fakehttp "k8s.io/client-go/rest/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 var userGVK = schema.GroupVersionKind{
@@ -52,7 +52,7 @@ func (NoOpClientProvider) NewOpenShiftUserClient(token string) (dynamic.Interfac
 }
 
 // FakeClientProvider returns fake clientsets and dynamic clients that are initialized with
-// objects. UserToken is used to verify that expected token is passed to NewClientWithToken()
+// objects. SelfSubjectReview responses use the request token as the returned UID.
 type FakeClientProvider struct {
 	InitialObjs    []runtime.Object
 	InitialDynamic []runtime.Object
@@ -67,10 +67,16 @@ func (p FakeClientProvider) NewDevWorkspaceClient() (dynamic.Interface, *rest.Co
 }
 
 func (p FakeClientProvider) NewClientWithToken(token string) (kubernetes.Interface, *rest.Config, error) {
-	if token != p.UserToken {
-		return nil, nil, fmt.Errorf("(TEST) Invalid token")
-	}
 	client := fake.NewSimpleClientset(p.InitialObjs...)
+	client.PrependReactor("create", "selfsubjectreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &authenticationv1.SelfSubjectReview{
+			Status: authenticationv1.SelfSubjectReviewStatus{
+				UserInfo: authenticationv1.UserInfo{
+					UID: token,
+				},
+			},
+		}, nil
+	})
 	return &WrapFakeClientCoreV1{client}, &rest.Config{}, nil
 }
 

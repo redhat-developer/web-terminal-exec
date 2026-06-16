@@ -26,7 +26,8 @@ func Authenticate(r *http.Request, clientProvider operations.ClientProvider) err
 	}
 	uid, err := operations.GetCurrentUserUID(token, clientProvider)
 	if err != nil {
-		return fmt.Errorf("unable to verify user: %s", err)
+		logrus.Errorf("Unable to verify user: %v", err)
+		return fmt.Errorf("unable to verify user")
 	}
 	if uid != config.AuthenticatedUserID {
 		logrus.Debugf("User failed to authenticate: authorized user = '%s', requested user = '%s'", config.AuthenticatedUserID, uid)
