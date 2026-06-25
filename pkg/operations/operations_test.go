@@ -46,9 +46,17 @@ func TestGetCurrentUserUID(t *testing.T) {
 		expectedUID string
 	}{
 		{
-			name: "Should return UID from SelfSubjectReview",
+			name: "Should return UID from OpenShift User API",
 			provider: testUserIDClientProvider{
-				userUID: expectedUID,
+				userAPIUID: expectedUID,
+			},
+			expectedUID: expectedUID,
+		},
+		{
+			name: "Should fall back to SelfSubjectReview when OpenShift User API is unavailable",
+			provider: testUserIDClientProvider{
+				returnUserAPIError: apierrors.NewNotFound(schema.GroupResource{Group: "user.openshift.io", Resource: "users"}, "~"),
+				userUID:            expectedUID,
 			},
 			expectedUID: expectedUID,
 		},
@@ -60,36 +68,28 @@ func TestGetCurrentUserUID(t *testing.T) {
 			errRegexp: "failed to create client to check user info",
 		},
 		{
-			name: "Should fall back to OpenShift User API when SelfSubjectReview is unavailable",
-			provider: testUserIDClientProvider{
-				returnReviewError: apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
-				userAPIUID:        expectedUID,
-			},
-			expectedUID: expectedUID,
-		},
-		{
 			name: "Should return error when both user lookups fail",
 			provider: testUserIDClientProvider{
-				returnReviewError:  apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
 				returnUserAPIError: apierrors.NewNotFound(schema.GroupResource{Group: "user.openshift.io", Resource: "users"}, "~"),
+				returnReviewError:  apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
 			},
 			errRegexp: "failed to get current user information",
 		},
 		{
-			name: "Should return error when SelfSubjectReview returns empty UID",
+			name: "Should allow empty UID from OpenShift User API for kube:admin",
 			provider: testUserIDClientProvider{
-				userUID: "",
+				userAPIUID:      "",
+				emptyUserAPIUID: true,
 			},
-			errRegexp: "SelfSubjectReview returned empty UID",
+			expectedUID: "",
 		},
 		{
-			name: "Should return error when OpenShift User API returns empty UID",
+			name: "Should return error when SelfSubjectReview returns empty UID on fallback",
 			provider: testUserIDClientProvider{
-				returnReviewError: apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
-				userAPIUID:        "",
-				emptyUserAPIUID:   true,
+				returnUserAPIError: apierrors.NewNotFound(schema.GroupResource{Group: "user.openshift.io", Resource: "users"}, "~"),
+				userUID:            "",
 			},
-			errRegexp: "OpenShift User API returned empty UID",
+			errRegexp: "SelfSubjectReview returned empty UID",
 		},
 	}
 
@@ -100,8 +100,8 @@ func TestGetCurrentUserUID(t *testing.T) {
 				assert.Error(t, err)
 				assert.Regexp(t, tt.errRegexp, err.Error())
 				if tt.name == "Should return error when both user lookups fail" {
-					assert.Contains(t, err.Error(), "SelfSubjectReview error:")
 					assert.Contains(t, err.Error(), "OpenShift User API error:")
+					assert.Contains(t, err.Error(), "SelfSubjectReview error:")
 				}
 				return
 			}
