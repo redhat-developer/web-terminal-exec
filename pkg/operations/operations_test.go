@@ -76,20 +76,20 @@ func TestGetCurrentUserUID(t *testing.T) {
 			errRegexp: "failed to get current user information",
 		},
 		{
-			name: "Should return error when SelfSubjectReview returns empty UID",
+			name: "Should allow empty UID from SelfSubjectReview for kube:admin",
 			provider: testUserIDClientProvider{
 				userUID: "",
 			},
-			errRegexp: "SelfSubjectReview returned empty UID",
+			expectedUID: "",
 		},
 		{
-			name: "Should return error when OpenShift User API returns empty UID",
+			name: "Should allow empty UID from OpenShift User API for kube:admin",
 			provider: testUserIDClientProvider{
 				returnReviewError: apierrors.NewNotFound(schema.GroupResource{Group: "authentication.k8s.io", Resource: "selfsubjectreviews"}, "self"),
 				userAPIUID:        "",
 				emptyUserAPIUID:   true,
 			},
-			errRegexp: "OpenShift User API returned empty UID",
+			expectedUID: "",
 		},
 	}
 

@@ -149,10 +149,8 @@ func getCurrentUserUIDFromSelfSubjectReview(token string, clientProvider ClientP
 		return "", err
 	}
 
-	if review.Status.UserInfo.UID == "" {
-		return "", fmt.Errorf("SelfSubjectReview returned empty UID")
-	}
-
+	// kube:admin / kubeadmin have no Kubernetes UID; empty string is a valid identifier
+	// when AUTHENTICATED_USER_ID is also empty (see config.AuthenticatedUserID).
 	return review.Status.UserInfo.UID, nil
 }
 
@@ -166,10 +164,5 @@ func getCurrentUserUIDFromOpenShiftUserAPI(token string, clientProvider ClientPr
 		return "", err
 	}
 
-	uid := string(userInfo.GetUID())
-	if uid == "" {
-		return "", fmt.Errorf("OpenShift User API returned empty UID")
-	}
-
-	return uid, nil
+	return string(userInfo.GetUID()), nil
 }
