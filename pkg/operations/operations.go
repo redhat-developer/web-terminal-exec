@@ -117,19 +117,20 @@ func GetCurrentWorkspacePod(client kubernetes.Interface) (*corev1.Pod, error) {
 }
 
 func GetCurrentUserUID(token string, clientProvider ClientProvider) (string, error) {
-	uid, err := getCurrentUserUIDFromSelfSubjectReview(token, clientProvider)
+	uid, err := getCurrentUserUIDFromOpenShiftUserAPI(token, clientProvider)
 	if err == nil {
 		return uid, nil
 	}
 
-	// Fall back to the OpenShift User API on clusters where SelfSubjectReview is unavailable.
-	uid, fallbackErr := getCurrentUserUIDFromOpenShiftUserAPI(token, clientProvider)
+	// Fall back to SelfSubjectReview on clusters where the OpenShift User API is unavailable
+	// (e.g. BYO external authentication without user.openshift.io).
+	uid, fallbackErr := getCurrentUserUIDFromSelfSubjectReview(token, clientProvider)
 	if fallbackErr == nil {
 		return uid, nil
 	}
 
 	return "", fmt.Errorf(
-		"failed to get current user information: SelfSubjectReview error: %w; OpenShift User API error: %w",
+		"failed to get current user information: OpenShift User API error: %w; SelfSubjectReview error: %w",
 		err,
 		fallbackErr,
 	)
@@ -149,8 +150,10 @@ func getCurrentUserUIDFromSelfSubjectReview(token string, clientProvider ClientP
 		return "", err
 	}
 
-	// kube:admin / kubeadmin have no Kubernetes UID; empty string is a valid identifier
-	// when AUTHENTICATED_USER_ID is also empty (see config.AuthenticatedUserID).
+	if review.Status.UserInfo.UID == "" {
+		return "", fmt.Errorf("SelfSubjectReview returned empty UID")
+	}
+
 	return review.Status.UserInfo.UID, nil
 }
 
@@ -164,5 +167,7 @@ func getCurrentUserUIDFromOpenShiftUserAPI(token string, clientProvider ClientPr
 		return "", err
 	}
 
+	// kube:admin / kubeadmin have no Kubernetes UID; empty string is a valid identifier
+	// when AUTHENTICATED_USER_ID is also empty (see config.AuthenticatedUserID).
 	return string(userInfo.GetUID()), nil
 }
