@@ -1,0 +1,30 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...100"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+
+ignore:
+  - "vendor/**"
+  - "build/**"
+  - "pkg/operations/test/**"
+
+flags:
+  unit-tests:
+    carryforward: true
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default

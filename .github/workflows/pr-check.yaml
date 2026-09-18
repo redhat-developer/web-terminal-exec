@@ -69,10 +69,6 @@ jobs:
       name: Check go vet
       run: |
         go vet ./...
-    -
-      name: Run Go Tests
-      run: |
-        go test ./...
 
   docker:
     name: Check docker build
