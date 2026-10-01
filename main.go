@@ -12,6 +12,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/redhat-developer/web-terminal-exec/pkg/constants"
 	"github.com/redhat-developer/web-terminal-exec/pkg/handler"
 	"github.com/redhat-developer/web-terminal-exec/pkg/operations"
+	"github.com/redhat-developer/web-terminal-exec/pkg/tlssetup"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,6 +45,8 @@ func main() {
 	}
 	activityManager.Start()
 
+	tlsConfig := tlssetup.BuildClusterTLSConfig(context.Background())
+
 	router := handler.Router{
 		ActivityManager: activityManager,
 		ClientProvider:  clientProvider,
@@ -51,6 +55,7 @@ func main() {
 	server := http.Server{
 		Addr:           config.URL,
 		Handler:        router.HTTPSHandler(),
+		TLSConfig:      tlsConfig,
 		ReadTimeout:    constants.ServerReadTimeout,
 		WriteTimeout:   constants.ServerWriteTimeout,
 		MaxHeaderBytes: constants.MaxHeaderBytes,
