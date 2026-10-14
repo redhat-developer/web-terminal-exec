@@ -12,8 +12,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/activity"
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
@@ -54,8 +56,22 @@ func main() {
 		ReadTimeout:    constants.ServerReadTimeout,
 		WriteTimeout:   constants.ServerWriteTimeout,
 		MaxHeaderBytes: constants.MaxHeaderBytes,
+		TLSConfig:      buildTLSConfig(),
 	}
 	if err := server.ListenAndServeTLS(TLSCertFile, TLSKeyFile); err != nil {
 		logrus.Errorf("Failed to start server with TLS enabled: %s", err)
 	}
+}
+
+func buildTLSConfig() *tls.Config {
+	if config.TLSMinVersion == "" {
+		return nil
+	}
+	minVersion, err := strconv.ParseUint(config.TLSMinVersion, 10, 16)
+	if err != nil {
+		logrus.Warnf("Invalid TLS min version %q, using Go default", config.TLSMinVersion)
+		return nil
+	}
+	logrus.Infof("Setting TLS min version to %s", tls.VersionName(uint16(minVersion)))
+	return &tls.Config{MinVersion: uint16(minVersion)}
 }

@@ -22,6 +22,7 @@ endif
 # Enable using Podman instead of Docker
 export DOCKER ?= podman
 export WEB_TERMINAL_EXEC_IMG ?= quay.io/wto/web-terminal-exec:next
+export ARCH ?= amd64
 
 
 ### fmt: Formats code using goimports
