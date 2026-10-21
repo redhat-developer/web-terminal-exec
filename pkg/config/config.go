@@ -53,6 +53,11 @@ var (
 
 	// UseBearerToken (deprecated) kept for compatibility but if specified must have 'true' value
 	UseBearerToken bool
+
+	// TLSMinVersion is the minimum TLS version as a decimal uint16
+	// (e.g. "771" for TLS 1.2, "772" for TLS 1.3).
+	// Set by the operator from the cluster APIServer TLS profile.
+	TLSMinVersion string
 )
 
 const (
@@ -64,6 +69,7 @@ const (
 	devworkspaceIDEnvVar        = "DEVWORKSPACE_ID"
 	devworkspaceNameEnvVar      = "DEVWORKSPACE_NAME"
 	devworkspaceNamespaceEnvVar = "DEVWORKSPACE_NAMESPACE"
+	tlsMinVersionEnvVar         = "TLS_MIN_VERSION"
 )
 
 var (
@@ -125,6 +131,7 @@ func updateDefaultsFromEnv() error {
 	DevWorkspaceName = os.Getenv(devworkspaceNameEnvVar)
 	DevWorkspaceNamespace = os.Getenv(devworkspaceNamespaceEnvVar)
 	DevWorkspaceID = os.Getenv(devworkspaceIDEnvVar)
+	TLSMinVersion = os.Getenv(tlsMinVersionEnvVar)
 	if DevWorkspaceName == "" {
 		return fmt.Errorf("environment variable %s must be set", devworkspaceNameEnvVar)
 	}
@@ -182,6 +189,7 @@ func printConfig() {
 	logrus.Infof("==> Pod selector: %s", PodSelector)
 	logrus.Infof("==> Idle timeout: %s", IdleTimeout)
 	logrus.Infof("==> Stop retry period: %s", StopRetryPeriod)
+	logrus.Infof("==> TLS min version: %s", TLSMinVersion)
 }
 
 func ResetConfigForTest() {
