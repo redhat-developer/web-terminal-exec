@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2024 Red Hat, Inc.
+// Copyright (c) 2019-2025 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -41,6 +42,14 @@ type FakeSPDYExecutor struct {
 var _ remotecommand.Executor = (*FakeSPDYExecutor)(nil)
 
 func (f *FakeSPDYExecutor) Stream(options remotecommand.StreamOptions) error {
+	return f.stream(options)
+}
+
+func (f *FakeSPDYExecutor) StreamWithContext(_ context.Context, options remotecommand.StreamOptions) error {
+	return f.stream(options)
+}
+
+func (f *FakeSPDYExecutor) stream(options remotecommand.StreamOptions) error {
 	stdinBytes, err := io.ReadAll(options.Stdin)
 	if err != nil {
 		return fmt.Errorf("(TEST) failed to read stdin from command: %w", err)

@@ -1,5 +1,5 @@
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9/go-toolset
-FROM registry.access.redhat.com/ubi9/go-toolset:1.21.10-1.1719562237 AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:1.26.5-1784190466 AS builder
 ENV GOPATH=/go/
 USER root
 WORKDIR /web-terminal-exec
@@ -18,7 +18,7 @@ COPY . .
 RUN make compile
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9-minimal
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1134
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1784092902
 RUN microdnf -y update && microdnf clean all && rm -rf /var/cache/yum && echo "Installed Packages" && rpm -qa | sort -V && echo "End Of Installed Packages"
 WORKDIR /
 COPY --from=builder /web-terminal-exec/_output/bin/web-terminal-exec /usr/local/bin/web-terminal-exec
@@ -50,6 +50,6 @@ LABEL summary="$SUMMARY" \
       name="$PRODNAME/$COMPNAME" \
       version="${CI_X_VERSION}.${CI_Y_VERSION}" \
       license="EPLv2" \
-      maintainer="Andrew Obuchowicz <aobuchow@redhat.com>" \
+      maintainer="David Kwon <dakwon@redhat.com>" \
       io.openshift.expose-services="" \
       usage=""

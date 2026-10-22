@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2024 Red Hat, Inc.
+// Copyright (c) 2019-2025 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,8 @@ func Authenticate(r *http.Request, clientProvider operations.ClientProvider) err
 	}
 	uid, err := operations.GetCurrentUserUID(token, clientProvider)
 	if err != nil {
-		return fmt.Errorf("unable to verify user: %s", err)
+		logrus.Errorf("Unable to verify user: %v", err)
+		return fmt.Errorf("unable to verify user")
 	}
 	if uid != config.AuthenticatedUserID {
 		logrus.Debugf("User failed to authenticate: authorized user = '%s', requested user = '%s'", config.AuthenticatedUserID, uid)
