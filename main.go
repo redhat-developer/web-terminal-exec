@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2025 Red Hat, Inc.
+// Copyright (c) 2019-2026 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -54,6 +54,7 @@ func main() {
 		ReadTimeout:    constants.ServerReadTimeout,
 		WriteTimeout:   constants.ServerWriteTimeout,
 		MaxHeaderBytes: constants.MaxHeaderBytes,
+		TLSConfig:      buildTLSConfig(),
 	}
 	if err := server.ListenAndServeTLS(TLSCertFile, TLSKeyFile); err != nil {
 		logrus.Errorf("Failed to start server with TLS enabled: %s", err)
