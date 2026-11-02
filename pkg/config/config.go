@@ -203,6 +203,7 @@ func ResetConfigForTest() {
 	PodSelector = ""
 	UseTLS = false
 	UseBearerToken = false
+	TLSMinVersion = ""
 	defaultURLValue = ":4444"
 	defaultAuthenticatedUserID = "\x00"
 	defaultPodSelector = ""

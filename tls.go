@@ -14,11 +14,17 @@ package main
 import (
 	"crypto/tls"
 	"strconv"
-	"strings"
 
 	"github.com/redhat-developer/web-terminal-exec/pkg/config"
 	"github.com/sirupsen/logrus"
 )
+
+var supportedTLSVersions = map[uint16]bool{
+	tls.VersionTLS10: true,
+	tls.VersionTLS11: true,
+	tls.VersionTLS12: true,
+	tls.VersionTLS13: true,
+}
 
 func buildTLSConfig() *tls.Config {
 	if config.TLSMinVersion == "" {
@@ -29,11 +35,11 @@ func buildTLSConfig() *tls.Config {
 		logrus.Warnf("Invalid TLS min version %q, using Go default", config.TLSMinVersion)
 		return nil
 	}
-	name := tls.VersionName(uint16(minVersion))
-	if strings.HasPrefix(name, "0x") {
-		logrus.Warnf("Unknown TLS version %q, ignoring", config.TLSMinVersion)
+	v := uint16(minVersion)
+	if !supportedTLSVersions[v] {
+		logrus.Warnf("Unsupported TLS version %q, ignoring", config.TLSMinVersion)
 		return nil
 	}
-	logrus.Infof("Setting TLS min version to %s", name)
-	return &tls.Config{MinVersion: uint16(minVersion)}
+	logrus.Infof("Setting TLS min version to %s", tls.VersionName(v))
+	return &tls.Config{MinVersion: v}
 }

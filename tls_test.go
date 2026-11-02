@@ -21,36 +21,74 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildTLSConfig_EmptyVersion(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-	config.TLSMinVersion = ""
-	assert.Nil(t, buildTLSConfig())
-}
+func TestBuildTLSConfig(t *testing.T) {
+	tests := []struct {
+		name       string
+		version    string
+		wantNil    bool
+		wantMinVer uint16
+	}{
+		{
+			name:    "empty version returns nil",
+			version: "",
+			wantNil: true,
+		},
+		{
+			name:       "valid TLS 1.2",
+			version:    "771",
+			wantMinVer: tls.VersionTLS12,
+		},
+		{
+			name:       "valid TLS 1.3",
+			version:    "772",
+			wantMinVer: tls.VersionTLS13,
+		},
+		{
+			name:    "invalid non-numeric string returns nil",
+			version: "not-a-number",
+			wantNil: true,
+		},
+		{
+			name:       "valid TLS 1.0",
+			version:    "769",
+			wantMinVer: tls.VersionTLS10,
+		},
+		{
+			name:       "valid TLS 1.1",
+			version:    "770",
+			wantMinVer: tls.VersionTLS11,
+		},
+		{
+			name:    "SSLv3 is rejected",
+			version: "768",
+			wantNil: true,
+		},
+		{
+			name:    "unknown version returns nil",
+			version: "999",
+			wantNil: true,
+		},
+	}
 
-func TestBuildTLSConfig_ValidTLS12(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-	config.TLSMinVersion = "771"
-	tlsConfig := buildTLSConfig()
-	assert.NotNil(t, tlsConfig)
-	assert.Equal(t, uint16(tls.VersionTLS12), tlsConfig.MinVersion)
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			origOutput := logrus.StandardLogger().Out
+			origVersion := config.TLSMinVersion
+			t.Cleanup(func() {
+				logrus.SetOutput(origOutput)
+				config.TLSMinVersion = origVersion
+			})
 
-func TestBuildTLSConfig_ValidTLS13(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-	config.TLSMinVersion = "772"
-	tlsConfig := buildTLSConfig()
-	assert.NotNil(t, tlsConfig)
-	assert.Equal(t, uint16(tls.VersionTLS13), tlsConfig.MinVersion)
-}
+			logrus.SetOutput(io.Discard)
+			config.TLSMinVersion = tt.version
 
-func TestBuildTLSConfig_InvalidString(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-	config.TLSMinVersion = "not-a-number"
-	assert.Nil(t, buildTLSConfig())
-}
-
-func TestBuildTLSConfig_UnknownVersion(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-	config.TLSMinVersion = "999"
-	assert.Nil(t, buildTLSConfig())
+			result := buildTLSConfig()
+			if tt.wantNil {
+				assert.Nil(t, result)
+			} else {
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.wantMinVer, result.MinVersion)
+			}
+		})
+	}
 }
