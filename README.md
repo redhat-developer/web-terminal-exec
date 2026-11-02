@@ -71,6 +71,7 @@ The Web Terminal Exec component is intended to only run within an OpenShift clus
 This repository contains a Makefile to simplify development of Web Terminal Exec. The following environment variables can be set to configure behavior:
 * `DOCKER`: configure container build tool to use for building container images. Default is `podman`.
 * `WEB_TERMINAL_EXEC_IMG`: Configure image name and tag for container builds. Default is `quay.io/wto/web-terminal-exec:next`.
+* `ARCH`: Configure target architecture for the image build (e.g. `amd64`, `arm64`, `s390x`, `ppc64le`). Default is `amd64`.
 
 | Rule | Purpose |
 | --- | --- |
