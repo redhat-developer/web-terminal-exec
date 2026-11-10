@@ -65,12 +65,19 @@ If a token is not provided or does not match what is expected, the server return
       Host:Port address for the Web Terminal Exec server. (default ":4444")
 ```
 
+## Environment variables
+The following environment variables configure runtime behavior of the server:
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TLS_MIN_VERSION` | Minimum TLS version as a decimal uint16 value. Supported values: `769` (TLS 1.0), `770` (TLS 1.1), `771` (TLS 1.2), `772` (TLS 1.3). | Go default |
+
 ## Development
 The Web Terminal Exec component is intended to only run within an OpenShift cluster in the context of a Web Terminal Operator installation. To test builds of Web Terminal Exec in an OpenShift cluster, edit the web-terminal-exec DevWorkspaceTemplate created by the Web Terminal Operator to use the in-development image. Alternatively, individual Web Terminal instances can be edited to use a custom image for testing. Running locally or in isolation (i.e. without the Web Terminal Operator installed) is not currently supported.
 
 This repository contains a Makefile to simplify development of Web Terminal Exec. The following environment variables can be set to configure behavior:
 * `DOCKER`: configure container build tool to use for building container images. Default is `podman`.
 * `WEB_TERMINAL_EXEC_IMG`: Configure image name and tag for container builds. Default is `quay.io/wto/web-terminal-exec:next`.
+* `ARCH`: Configure target architecture for the image build (e.g. `amd64`, `arm64`, `s390x`, `ppc64le`). Default is `amd64`.
 
 | Rule | Purpose |
 | --- | --- |

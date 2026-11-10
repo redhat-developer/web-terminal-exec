@@ -22,6 +22,7 @@ endif
 # Enable using Podman instead of Docker
 export DOCKER ?= podman
 export WEB_TERMINAL_EXEC_IMG ?= quay.io/wto/web-terminal-exec:next
+export ARCH ?= amd64
 
 
 ### fmt: Formats code using goimports
@@ -76,14 +77,14 @@ compile:
 	  -asmflags all=-trimpath=/ \
 	  -ldflags "-X $(GO_PACKAGE_PATH)/version.Commit=$(GIT_COMMIT_ID) \
 	  -X $(GO_PACKAGE_PATH)/version.BuildTime=$(BUILD_TIME)" \
-	main.go
+	.
 
 ### docker: Builds and pushes Web Terminal Exec image
 docker: docker-build docker-push
 
 ### docker-build: Builds the Web Terminal Exec image
 docker-build:
-	$(DOCKER) build . -t ${WEB_TERMINAL_EXEC_IMG} -f build/Dockerfile
+	$(DOCKER) build . -t ${WEB_TERMINAL_EXEC_IMG} -f build/Dockerfile --build-arg TARGETARCH=$(ARCH)
 
 ### docker-push: Web Terminal Exec image
 docker-push:
