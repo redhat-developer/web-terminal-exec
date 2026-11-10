@@ -1,5 +1,6 @@
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9/go-toolset
 FROM registry.access.redhat.com/ubi9/go-toolset:1.26.5-1784190466 AS builder
+ARG TARGETARCH=amd64
 ENV GOPATH=/go/
 USER root
 WORKDIR /web-terminal-exec
@@ -15,7 +16,7 @@ RUN go env GOPROXY && \
 COPY . .
 
 # Compile Web Terminal Exec binary
-RUN make compile
+RUN make compile ARCH=${TARGETARCH}
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi9-minimal
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1784092902

@@ -65,6 +65,12 @@ If a token is not provided or does not match what is expected, the server return
       Host:Port address for the Web Terminal Exec server. (default ":4444")
 ```
 
+## Environment variables
+The following environment variables configure runtime behavior of the server:
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TLS_MIN_VERSION` | Minimum TLS version as a decimal uint16 value. Supported values: `769` (TLS 1.0), `770` (TLS 1.1), `771` (TLS 1.2), `772` (TLS 1.3). | Go default |
+
 ## Development
 The Web Terminal Exec component is intended to only run within an OpenShift cluster in the context of a Web Terminal Operator installation. To test builds of Web Terminal Exec in an OpenShift cluster, edit the web-terminal-exec DevWorkspaceTemplate created by the Web Terminal Operator to use the in-development image. Alternatively, individual Web Terminal instances can be edited to use a custom image for testing. Running locally or in isolation (i.e. without the Web Terminal Operator installed) is not currently supported.
 
