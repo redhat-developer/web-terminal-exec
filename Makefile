@@ -84,7 +84,7 @@ docker: docker-build docker-push
 
 ### docker-build: Builds the Web Terminal Exec image
 docker-build:
-	$(DOCKER) build . -t ${WEB_TERMINAL_EXEC_IMG} -f build/Dockerfile
+	$(DOCKER) build . -t ${WEB_TERMINAL_EXEC_IMG} -f build/Dockerfile --build-arg TARGETARCH=$(ARCH)
 
 ### docker-push: Web Terminal Exec image
 docker-push:
