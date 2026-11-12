@@ -11,10 +11,101 @@
 
 version: 2
 updates:
+  # Enable version updates for Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "1.11.x"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "1.13.x"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "1.14.x"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "1.15.x"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "1.16.x"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    target-branch: "1.17.x"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
   # Enable version updates for Docker
   - package-ecosystem: "docker"
-    # Look for a `Dockerfile` in the `build` directory
     directory: "/build/dockerfiles"
-    # Check for updates once a week
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/build/dockerfiles"
+    target-branch: "1.11.x"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/build/dockerfiles"
+    target-branch: "1.13.x"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/build/dockerfiles"
+    target-branch: "1.14.x"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/build/dockerfiles"
+    target-branch: "1.15.x"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/build/dockerfiles"
+    target-branch: "1.16.x"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/build/dockerfiles"
+    target-branch: "1.17.x"
     schedule:
       interval: "weekly"
